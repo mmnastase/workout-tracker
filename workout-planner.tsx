@@ -14,6 +14,10 @@ import { Exercise, WorkoutPlan } from "./workout.model";
 import { useState } from "react";
 import { useWorkouts } from "./WorkoutProvider";
 import { EmptyWorkoutPlanner } from "./EmptyWorkoutPlanner";
+import {
+  useTutorialDialog,
+  useTutorialDispatch,
+} from "./TutorialDialogProvider";
 
 export function WorkoutPlanner({
   handleActiveTab,
@@ -29,7 +33,16 @@ export function WorkoutPlanner({
   ) as WorkoutPlan;
   const [planDate, setPlanDate] = useState(selectedPlan.date);
 
-  function openExerciseVideo(exercise: string) {}
+  const tutorialDialogDispatch = useTutorialDispatch();
+  const { isOpen, selectedExercise } = useTutorialDialog();
+
+  function openExerciseVideo(selectedExercise: string) {
+    debugger;
+    tutorialDialogDispatch({
+      type: "OPEN",
+      payload: { selectedExercise },
+    });
+  }
 
   const deletePlan = (id: string) => {
     // const updatedPlans = workoutPlans.workouts.filter((plan) => plan.id !== id);
@@ -124,6 +137,7 @@ export function WorkoutPlanner({
 
   return (
     <>
+      {isOpen + " " + selectedExercise}
       {selectedPlan && (
         <Card className="bg-zinc-800 border-zinc-700 rounded-none">
           <CardHeader className="flex flex-row items-center justify-between">
@@ -224,7 +238,10 @@ export function WorkoutPlanner({
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700"
-                            onClick={() => openExerciseVideo(ex.exercise)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              openExerciseVideo(ex.exercise);
+                            }}
                           >
                             <Info className="h-4 w-4" />
                             <span className="sr-only">Exercise Info</span>

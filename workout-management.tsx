@@ -20,14 +20,16 @@ import {
   format,
   getDay,
   startOfMonth,
-  subMonths
+  subMonths,
 } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus, Save } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { WorkoutPlanner } from "./workout-planner";
-import { exerciseVideos, WorkoutPlan } from "./workout.model";
+import { WorkoutPlan } from "./workout.model";
 import { WorkoutCalendarDay } from "./WorkoutCalendarDay";
 import { useWorkouts, WorkoutProvider } from "./WorkoutProvider";
+import { TutorialDialogProvider } from "./TutorialDialogProvider";
+import { TutorialDialog } from "./TutorialDialog";
 
 // Exercise video mapping
 
@@ -38,8 +40,6 @@ export default function WorkoutManagement() {
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [dateEditMode, setDateEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("calendar");
-  const [videoDialogOpen, setVideoDialogOpen] = useState(false);
-  const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
 
   // Calendar state
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -190,203 +190,166 @@ export default function WorkoutManagement() {
     alert("Workout plans saved successfully!");
   };
 
-  const openExerciseVideo = (exerciseType: string) => {
-    setSelectedExercise(exerciseType);
-    setVideoDialogOpen(true);
-  };
-
   return (
     <WorkoutProvider>
-      <div className="min-h-screen bg-zinc-900 text-zinc-100">
-        <div className="container mx-auto p-4">
-          <div className="flex flex-col space-y-4">
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-zinc-100">
-                Workout Planner
-              </h1>
-              <Button
-                onClick={handleSave}
-                className="flex items-center gap-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-none"
+      <TutorialDialogProvider>
+        <div className="min-h-screen bg-zinc-900 text-zinc-100">
+          <div className="container mx-auto p-4">
+            <div className="flex flex-col space-y-4">
+              <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-zinc-100">
+                  Workout Planner
+                </h1>
+                <Button
+                  onClick={handleSave}
+                  className="flex items-center gap-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-none"
+                >
+                  <Save className="h-4 w-4" /> Save All Plans
+                </Button>
+              </div>
+
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
               >
-                <Save className="h-4 w-4" /> Save All Plans
-              </Button>
-            </div>
+                <TabsList className="grid w-full grid-cols-2 bg-zinc-800 rounded-none">
+                  <TabsTrigger
+                    value="calendar"
+                    className="rounded-none data-[state=active]:bg-zinc-700 data-[state=active]:text-zinc-100"
+                  >
+                    Calendar View
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="editor"
+                    className="rounded-none data-[state=active]:bg-zinc-700 data-[state=active]:text-zinc-100"
+                    disabled={!selectedPlan}
+                  >
+                    Plan Editor
+                  </TabsTrigger>
+                </TabsList>
 
-            <Tabs
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2 bg-zinc-800 rounded-none">
-                <TabsTrigger
-                  value="calendar"
-                  className="rounded-none data-[state=active]:bg-zinc-700 data-[state=active]:text-zinc-100"
-                >
-                  Calendar View
-                </TabsTrigger>
-                <TabsTrigger
-                  value="editor"
-                  className="rounded-none data-[state=active]:bg-zinc-700 data-[state=active]:text-zinc-100"
-                  disabled={!selectedPlan}
-                >
-                  Plan Editor
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="calendar" className="mt-4">
-                <Card className="bg-zinc-800 border-zinc-700 rounded-none">
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <div className="flex items-center gap-4">
-                      <Button
-                        onClick={prevMonth}
-                        variant="ghost"
-                        size="icon"
-                        className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 rounded-none"
-                      >
-                        <ChevronLeft className="h-5 w-5" />
-                        <span className="sr-only">Previous Month</span>
-                      </Button>
-                      <CardTitle className="text-zinc-100 text-xl">
-                        {format(currentMonth, "MMMM yyyy")}
-                      </CardTitle>
-                      <Button
-                        onClick={nextMonth}
-                        variant="ghost"
-                        size="icon"
-                        className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 rounded-none"
-                      >
-                        <ChevronRight className="h-5 w-5" />
-                        <span className="sr-only">Next Month</span>
-                      </Button>
-                    </div>
-                    <Button
-                      onClick={addNewPlan}
-                      className="flex items-center gap-1 bg-zinc-700 hover:bg-zinc-600 text-zinc-100 rounded-none"
-                    >
-                      <Plus className="h-4 w-4" /> New Workout
-                    </Button>
-                  </CardHeader>
-                  <CardContent>
-                    <div
-                      ref={calendarRef}
-                      className="relative grid grid-cols-7 gap-px bg-zinc-700"
-                    >
-                      {/* Day headers */}
-                      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-                        (day) => (
-                          <div
-                            key={day}
-                            className="p-2 text-center font-medium text-zinc-300 bg-zinc-800"
-                          >
-                            {day}
-                          </div>
-                        )
-                      )}
-
-                      {/* Calendar days */}
-                      {calendarDays.map((day, i) => {
-                        return (
-                          <WorkoutCalendarDay
-                            plansByDate={plansByDate}
-                            key={i}
-                            day={day}
-                            handleContextMenu={handleContextMenu}
-                            viewWorkoutsForDate={viewWorkoutsForDate}
-                            currentMonth={currentMonth}
-                            handleActiveTab={setActiveTab}
-                          />
-                        );
-                      })}
-
-                      {/* Context Menu */}
-                      {contextMenu.visible && contextMenu.date && (
-                        <div
-                          className="absolute bg-zinc-900 border border-zinc-700 shadow-lg z-10"
-                          style={{
-                            top: `${contextMenu.y}px`,
-                            left: `${contextMenu.x}px`,
-                          }}
-                          onClick={(e) => e.stopPropagation()}
+                <TabsContent value="calendar" className="mt-4">
+                  <Card className="bg-zinc-800 border-zinc-700 rounded-none">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <div className="flex items-center gap-4">
+                        <Button
+                          onClick={prevMonth}
+                          variant="ghost"
+                          size="icon"
+                          className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 rounded-none"
                         >
-                          <div className="py-1 text-sm">
-                            <div className="px-3 py-2 font-medium border-b border-zinc-800">
-                              {format(contextMenu.date, "MMMM d, yyyy")}
-                            </div>
-                            <button
-                              className="w-full text-left px-4 py-2 hover:bg-zinc-800"
-                              onClick={() =>
-                                createWorkoutForDate(contextMenu.date!)
-                              }
+                          <ChevronLeft className="h-5 w-5" />
+                          <span className="sr-only">Previous Month</span>
+                        </Button>
+                        <CardTitle className="text-zinc-100 text-xl">
+                          {format(currentMonth, "MMMM yyyy")}
+                        </CardTitle>
+                        <Button
+                          onClick={nextMonth}
+                          variant="ghost"
+                          size="icon"
+                          className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 rounded-none"
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                          <span className="sr-only">Next Month</span>
+                        </Button>
+                      </div>
+                      <Button
+                        onClick={addNewPlan}
+                        className="flex items-center gap-1 bg-zinc-700 hover:bg-zinc-600 text-zinc-100 rounded-none"
+                      >
+                        <Plus className="h-4 w-4" /> New Workout
+                      </Button>
+                    </CardHeader>
+                    <CardContent>
+                      <div
+                        ref={calendarRef}
+                        className="relative grid grid-cols-7 gap-px bg-zinc-700"
+                      >
+                        {/* Day headers */}
+                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+                          (day) => (
+                            <div
+                              key={day}
+                              className="p-2 text-center font-medium text-zinc-300 bg-zinc-800"
                             >
-                              Add New Workout
-                            </button>
-                            {plansByDate[format(contextMenu.date, "yyyy-MM-dd")]
-                              ?.length > 0 && (
+                              {day}
+                            </div>
+                          )
+                        )}
+
+                        {/* Calendar days */}
+                        {calendarDays.map((day, i) => {
+                          return (
+                            <WorkoutCalendarDay
+                              plansByDate={plansByDate}
+                              key={i}
+                              day={day}
+                              handleContextMenu={handleContextMenu}
+                              viewWorkoutsForDate={viewWorkoutsForDate}
+                              currentMonth={currentMonth}
+                              handleActiveTab={setActiveTab}
+                            />
+                          );
+                        })}
+
+                        {/* Context Menu */}
+                        {contextMenu.visible && contextMenu.date && (
+                          <div
+                            className="absolute bg-zinc-900 border border-zinc-700 shadow-lg z-10"
+                            style={{
+                              top: `${contextMenu.y}px`,
+                              left: `${contextMenu.x}px`,
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="py-1 text-sm">
+                              <div className="px-3 py-2 font-medium border-b border-zinc-800">
+                                {format(contextMenu.date, "MMMM d, yyyy")}
+                              </div>
                               <button
                                 className="w-full text-left px-4 py-2 hover:bg-zinc-800"
                                 onClick={() =>
-                                  viewWorkoutsForDate(contextMenu.date!)
+                                  createWorkoutForDate(contextMenu.date!)
                                 }
                               >
-                                View Workouts
+                                Add New Workout
                               </button>
-                            )}
+                              {plansByDate[
+                                format(contextMenu.date, "yyyy-MM-dd")
+                              ]?.length > 0 && (
+                                <button
+                                  className="w-full text-left px-4 py-2 hover:bg-zinc-800"
+                                  onClick={() =>
+                                    viewWorkoutsForDate(contextMenu.date!)
+                                  }
+                                >
+                                  View Workouts
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-              <TabsContent value="editor" className="mt-4">
+                <TabsContent value="editor" className="mt-4">
                   <WorkoutPlanner
                     handleActiveTab={setActiveTab}
                     handleSelectedPlan={setSelectedPlanId}
                   />
-              </TabsContent>
-            </Tabs>
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
-        </div>
 
-        {/* Exercise Video Dialog */}
-        <Dialog open={videoDialogOpen} onOpenChange={setVideoDialogOpen}>
-          <DialogContent className="sm:max-w-[700px] bg-zinc-800 border-zinc-700 text-zinc-100 rounded-none">
-            {selectedExercise && exerciseVideos[selectedExercise] && (
-              <>
-                <DialogHeader>
-                  <DialogTitle className="text-zinc-100">
-                    {exerciseVideos[selectedExercise].title}
-                  </DialogTitle>
-                  <DialogDescription className="text-zinc-400">
-                    {exerciseVideos[selectedExercise].description}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="aspect-video w-full overflow-hidden">
-                  <iframe
-                    width="100%"
-                    height="100%"
-                    src={`https://www.youtube.com/embed/${exerciseVideos[selectedExercise].videoId}`}
-                    title={exerciseVideos[selectedExercise].title}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="aspect-video"
-                  ></iframe>
-                </div>
-                <DialogFooter>
-                  <Button
-                    onClick={() => setVideoDialogOpen(false)}
-                    className="bg-zinc-700 hover:bg-zinc-600 text-zinc-100 rounded-none"
-                  >
-                    Close
-                  </Button>
-                </DialogFooter>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
-      </div>
+          {/* Exercise Video Dialog */}
+          <TutorialDialog />
+        </div>
+      </TutorialDialogProvider>
     </WorkoutProvider>
   );
 }

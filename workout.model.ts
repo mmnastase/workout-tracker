@@ -14,7 +14,7 @@ export type WorkoutPlan = {
     exercises: Exercise[];
 };
 
-export const exerciseVideos: Record<
+export const EXERCISE_VIDEOS: Record<
   string,
   { title: string; videoId: string; description: string }
 > = {
