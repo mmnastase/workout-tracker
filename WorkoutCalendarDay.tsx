@@ -9,14 +9,15 @@ export function WorkoutCalendarDay({
   viewWorkoutsForDate,
   currentMonth,
   plansByDate,
+  handleActiveTab,
 }: {
   currentMonth: Date;
   day: Date;
   plansByDate: Record<string, any[]>;
   viewWorkoutsForDate: (date: Date) => void;
   handleContextMenu: (e: React.MouseEvent, date: Date) => void;
+  handleActiveTab: (tab: string) => void;
 }) {
-
   const dispatch = useWorkoutDispatch();
   const { selectedWorkoutId } = useWorkouts();
 
@@ -37,8 +38,9 @@ export function WorkoutCalendarDay({
   const isDayToday = isToday(day);
 
   function setSelectedPlanId(id: any) {
-    console.log('setting workout id to: ', id);
+    console.log("setting workout id to: ", id);
     dispatch({ type: "SELECT_WORKOUT", payload: id });
+    handleActiveTab("editor");
   }
 
   return (

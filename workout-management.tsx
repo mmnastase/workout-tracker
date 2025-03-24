@@ -19,15 +19,13 @@ import {
   endOfMonth,
   format,
   getDay,
-  isValid,
-  parseISO,
   startOfMonth,
-  subMonths,
+  subMonths
 } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus, Save } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { WorkoutPlanner } from "./workout-planner";
-import { Exercise, exerciseVideos, WorkoutPlan } from "./workout.model";
+import { exerciseVideos, WorkoutPlan } from "./workout.model";
 import { WorkoutCalendarDay } from "./WorkoutCalendarDay";
 import { useWorkouts, WorkoutProvider } from "./WorkoutProvider";
 
@@ -186,99 +184,6 @@ export default function WorkoutManagement() {
     setSelectedPlanId(newPlan.id);
     setActiveTab("editor");
   };
-
-  const deletePlan = (id: string) => {
-    const updatedPlans = workoutPlans.workouts.filter((plan) => plan.id !== id);
-    // setWorkoutPlans(updatedPlans);
-    setActiveTab("calendar");
-    setSelectedPlanId(null);
-  };
-
-  const updatePlanName = (value: string) => {
-    if (!selectedPlanId) return;
-
-    // setWorkoutPlans(
-    //   workoutPlans.map((plan) =>
-    //     plan.id === selectedPlanId ? { ...plan, name: value } : plan
-    //   )
-    // );
-  };
-
-  const updatePlanDate = (value: string) => {
-    if (!selectedPlanId) return;
-
-    if (isValid(parseISO(value))) {
-      // setWorkoutPlans(
-      //   workoutPlans.map((plan) =>
-      //     plan.id === selectedPlanId ? { ...plan, date: value } : plan
-      //   )
-      // );
-    }
-  };
-
-  const toggleDateEditMode = () => {
-    setDateEditMode(!dateEditMode);
-  };
-
-  // Functions to manage exercises in the selected plan
-  const addExercise = () => {
-    if (!selectedPlanId) return;
-
-    // setWorkoutPlans(
-    //   workoutPlans.map((plan) => {
-    //     if (plan.id === selectedPlanId) {
-    //       return {
-    //         ...plan,
-    //         exercises: [
-    //           ...plan.exercises,
-    //           { id: crypto.randomUUID(), exercise: "", reps: "", weight: "" },
-    //         ],
-    //       };
-    //     }
-    //     return plan;
-    //   })
-    // );
-  };
-
-  const removeExercise = (exerciseId: string) => {
-    if (!selectedPlanId) return;
-
-    //   setWorkoutPlans(
-    //     workoutPlans.map((plan) => {
-    //       if (plan.id === selectedPlanId && plan.exercises.length > 1) {
-    //         return {
-    //           ...plan,
-    //           exercises: plan.exercises.filter((ex) => ex.id !== exerciseId),
-    //         };
-    //       }
-    //       return plan;
-    //     })
-    //   );
-    // };
-  };
-
-  const updateExercise = (
-    exerciseId: string,
-    field: keyof Exercise,
-    value: string
-  ) => {
-    if (!selectedPlanId) return;
-
-    // setWorkoutPlans(
-    //   workoutPlans.map((plan) => {
-    //     if (plan.id === selectedPlanId) {
-    //       return {
-    //         ...plan,
-    //         exercises: plan.exercises.map((ex) =>
-    //           ex.id === exerciseId ? { ...ex, [field]: value } : ex
-    //         ),
-    //       };
-    //     }
-    //     return plan;
-    //   })
-    // );
-  };
-
   const handleSave = () => {
     console.log("Saving all workout plans:", workoutPlans);
     // Here you would typically save to localStorage, a database, etc.
@@ -388,6 +293,7 @@ export default function WorkoutManagement() {
                             handleContextMenu={handleContextMenu}
                             viewWorkoutsForDate={viewWorkoutsForDate}
                             currentMonth={currentMonth}
+                            handleActiveTab={setActiveTab}
                           />
                         );
                       })}
@@ -434,24 +340,10 @@ export default function WorkoutManagement() {
               </TabsContent>
 
               <TabsContent value="editor" className="mt-4">
-                {selectedPlan ? (
                   <WorkoutPlanner
                     handleActiveTab={setActiveTab}
                     handleSelectedPlan={setSelectedPlanId}
-                    handleDeletePlan={deletePlan}
-                    selectedPlan={selectedPlan}
                   />
-                ) : (
-                  <div className="text-center py-8 text-zinc-300">
-                    <p>No workout plan selected.</p>
-                    <Button
-                      onClick={addNewPlan}
-                      className="mt-4 bg-zinc-700 hover:bg-zinc-600 text-zinc-100 rounded-none"
-                    >
-                      Create New Plan
-                    </Button>
-                  </div>
-                )}
               </TabsContent>
             </Tabs>
           </div>
